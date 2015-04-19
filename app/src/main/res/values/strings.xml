@@ -2,7 +2,8 @@
     <string name="app_name">CitiSense - vesna</string>
     <string name="shared_prefs">preferences</string>
     <string name="title_activity_main">Connect Vesna</string>
-
+    <string name="selected_color">#eee</string>
     <string name="hello_world">Hello world!</string>
     <string name="action_settings">Settings</string>
+    <string name="title_activity_data_collection">Data Collection</string>
 </resources>

@@ -3,9 +3,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.graphics.Color;
 import android.net.wifi.ScanResult;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.util.Log;
@@ -28,7 +30,6 @@ public class MainActivity extends ActionBarActivity {
     StringBuilder sb = new StringBuilder();
     ListView wifiListView;
     List<String> refinedWifiList = new ArrayList<String>();
-    String vesnaPass = "passphrase";
     ArrayAdapter<String> wifiListAdapter;
 
     @Override
@@ -78,30 +79,62 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void wifi_element_clicked(View view) {
+        view.setBackgroundColor(0xffaaaaaa);
         String ssid = ((TextView)((ViewGroup)view).getChildAt(1)).getText().toString();
-        WifiConfiguration conf = new WifiConfiguration();
-        conf.SSID = "\"" + ssid + "\"";
-        conf.preSharedKey = "\""+ vesnaPass +"\"";
-        mainWifi.addNetwork(conf);
-        List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
-        for( WifiConfiguration i : list ) {
-            if(i.SSID != null && i.SSID.equals("\"" + ssid + "\"")) {
-                mainWifi.disconnect();
-                mainWifi.enableNetwork(i.networkId, true);
-                mainWifi.reconnect();
-                break;
-            }
-        }
+        new ConnectAndCheck(ssid, this).execute();
+
     }
 
     class WifiReceiver extends BroadcastReceiver {
         public void onReceive(Context c, Intent intent) {
             wifiList = mainWifi.getScanResults();
             refinedWifiList.clear();
+            String ssid;
             for(int i = 0; i < wifiList.size(); i++){
-                refinedWifiList.add(wifiList.get(i).SSID);
-                wifiListAdapter.notifyDataSetChanged();
+                ssid = wifiList.get(i).SSID;
+                if(ssid.contains("CITI_JSI")) {
+                    refinedWifiList.add(ssid);
+                    wifiListAdapter.notifyDataSetChanged();
+                }
             }
+        }
+    }
+
+    public class ConnectAndCheck extends AsyncTask<Void, Void, Void> {
+        String vesnaPass = "passphrase";
+        String ssid;
+        Context context;
+        ConnectAndCheck(String ssid, Context context) {
+            this.ssid = ssid;
+            this.context = context;
+
+        }
+
+        @Override
+        protected Void doInBackground(Void... params) {
+            if(mainWifi.getConnectionInfo().getSSID().contains(ssid)) {
+                return null;
+            }
+            WifiConfiguration conf = new WifiConfiguration();
+            conf.SSID = "\"" + ssid + "\"";
+            conf.preSharedKey = "\""+ vesnaPass +"\"";
+            mainWifi.addNetwork(conf);
+            List<WifiConfiguration> list = mainWifi.getConfiguredNetworks();
+            for( WifiConfiguration i : list ) {
+                if(i.SSID != null && i.SSID.equals("\"" + ssid + "\"")) {
+                    mainWifi.disconnect();
+                    mainWifi.enableNetwork(i.networkId, true);
+                    mainWifi.reconnect();
+                    break;
+                }
+            }
+            return null;
+        }
+
+        @Override
+        protected void onPostExecute(Void result) {
+            Intent intent = new Intent(context, DataCollection.class);
+            startActivity(intent);
         }
     }
 }
