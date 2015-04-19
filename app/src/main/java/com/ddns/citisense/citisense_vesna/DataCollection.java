@@ -87,13 +87,15 @@ public class DataCollection extends ActionBarActivity {
             String response = "";
             try {
                 int value=0;
-                while(mBufferIn.ready())
+                while(true)
                 {
                     value = mBufferIn.read();
                     char c = (char)value;
                     response += c;
+                    if (response.endsWith("OK")) {
+                        break;
+                    }
                 }
-                response = response.split("OK")[0];
             } catch (IOException e) {
                 e.printStackTrace();
                 connect();
@@ -116,8 +118,8 @@ public class DataCollection extends ActionBarActivity {
                 }
                 if (!response.contains("JUNK") && !response.isEmpty()) {
                     publishProgress(response);
-                    Thread.sleep(1000);
                 }
+                Thread.sleep(1000);
 
                 if (response.contains("nocm nikol brejkat!!")) {
                     break;
